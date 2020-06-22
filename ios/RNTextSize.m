@@ -72,6 +72,7 @@ RCT_EXPORT_METHOD(measure:(NSDictionary * _Nullable)options
     resolve(@{
               @"width": @0,
               @"height": @14,
+              @"heightNew": @14,
               @"lastLineWidth": @0,
               @"lineCount": @0,
               });
@@ -93,6 +94,8 @@ RCT_EXPORT_METHOD(measure:(NSDictionary * _Nullable)options
 
   // Create attributes for the font and the optional letter spacing.
   const CGFloat letterSpacing = CGFloatValueFrom(options[@"letterSpacing"]);
+  const CGFloat lineHeight = CGFloatValueFrom(options[@"lineHeight"]);
+  const CGFloat fontSize = CGFloatValueFrom(options[@"fontSize"]);
   NSDictionary<NSAttributedStringKey,id> *const attributes = isnan(letterSpacing)
   ? @{NSFontAttributeName: font}
   : @{NSFontAttributeName: font, NSKernAttributeName: @(letterSpacing)};
@@ -118,10 +121,11 @@ RCT_EXPORT_METHOD(measure:(NSDictionary * _Nullable)options
   const CGFloat width = MIN(RCTCeilPixelValue(size.width + epsilon), maxSize.width);
   const CGFloat height = MIN(RCTCeilPixelValue(size.height + epsilon), maxSize.height);
   const NSInteger lineCount = [self getLineCount:layoutManager];
+  const CGFloat heightWithLineHeight = MIN(RCTCeilPixelValue(lineCount * fontSize * (lineHeight/fontSize) + epsilon), maxSize.height);
 
   NSMutableDictionary *result = [[NSMutableDictionary alloc]
                                  initWithObjectsAndKeys:@(width), @"width",
-                                 @(height), @"height",
+                                 @(heightWithLineHeight), @"height",
                                  @(lineCount), @"lineCount",
                                  nil];
 
@@ -209,8 +213,13 @@ RCT_EXPORT_METHOD(flatHeights:(NSDictionary * _Nullable)options
     [textStorage replaceCharactersInRange:range withString:text];
     CGSize size = [layoutManager usedRectForTextContainer:textContainer].size;
 
+  const NSInteger lineCount = [self getLineCount:layoutManager];
+  const CGFloat lineHeight = CGFloatValueFrom(options[@"lineHeight"]);
+  const CGFloat fontSize = CGFloatValueFrom(options[@"fontSize"]);
+  const CGFloat heightWithLineHeight = MIN(RCTCeilPixelValue(lineCount * fontSize * (lineHeight/fontSize) + epsilon), maxSize.height);
+
     const CGFloat height = MIN(RCTCeilPixelValue(size.height + epsilon), maxSize.height);
-    result[ix] = @(height);
+    result[ix] = @(heightWithLineHeight);
   }
 
   resolve(result);
